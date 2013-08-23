@@ -15,17 +15,22 @@ void basic_test()
     uint64_t *b;
     uint32_t *c;
     uint16_t *d;
+    void *str;
+    int ret;
 
-    d = (uint16_t*)malloc(sizeof(uint16_t));
+    d = malloc(sizeof(uint16_t));
 
     memleak_start();
 
-    a = (uint8_t*)malloc(sizeof(uint8_t));
+    a = (uint8_t*)calloc(0, sizeof(uint8_t));
     b = (uint64_t*)malloc(sizeof(uint64_t));
     c = (uint32_t*)malloc(sizeof(uint32_t));
+    c = (uint32_t*)realloc(c, sizeof(uint32_t)*24);
+
+    ret = posix_memalign(&str, 512, 512);
 
     free(a);
-    free(c);
+    free(b);
 
     memleak_end();
 }

@@ -66,19 +66,62 @@ void memleak_end()
     }
 }
 
+void _memleak_add_to_index(void *addr, size_t size, char *file, size_t line)
+{
+    DBG("malloc at %s:%ld, size %ld\n", file, line, size);
+    struct memleak_item *item = (struct memleak_item *)malloc(sizeof(struct memleak_item));
+    item->addr = (uint64_t)addr;
+    item->file = file;
+    item->line = line;
+    item->size = size;
+    rbwrap_insert(&rbtree, &item->rb, memleak_cmp);
+}
+
 void * memleak_alloc(size_t size, char *file, size_t line)
 {
     void *addr = malloc(size);
     if (addr && start_sw) {
-        DBG("malloc at %s:%ld, size %ld\n", file, line, size);
-        struct memleak_item *item = (struct memleak_item *)malloc(sizeof(struct memleak_item));
-        item->addr = (uint64_t)addr;
-        item->file = file;
-        item->line = line;
-        item->size = size;
-        rbwrap_insert(&rbtree, &item->rb, memleak_cmp);
+        _memleak_add_to_index(addr, size, file, line);
     }
+    return addr;
+}
 
+void * memleak_calloc(size_t nmemb, size_t size, char *file, size_t line)
+{
+    void *addr = calloc(nmemb, size);
+    if (addr && start_sw) {
+        _memleak_add_to_index(addr, size, file, line);
+    }
+    return addr;
+}
+
+int memleak_posix_memalign(void **memptr, size_t alignment, size_t size, char *file, size_t line)
+{
+    int ret = posix_memalign(memptr, alignment, size);
+    if (ret==0 && start_sw)
+    {
+        _memleak_add_to_index(*memptr, size, file, line);
+    }
+    return ret;
+}
+
+void *memleak_realloc(void *ptr, size_t size)
+{
+    void *addr = realloc(ptr, size);
+    if (addr && start_sw) {
+        struct rb_node *r;
+        struct memleak_item *item, query;
+
+        query.addr = (uint64_t)ptr;
+        r = rbwrap_search(&rbtree, &query.rb, memleak_cmp);
+        if (r) {
+            item = _get_entry(r, struct memleak_item, rb);
+            DBG("realloc from address 0x%016lx (allocated at %s:%ld, size %ld)\n\tto address 0x%016lx (size %ld)\n", 
+                item->addr, item->file, item->line, item->size, (uint64_t)addr, size);
+            rb_erase(r, &rbtree);
+            _memleak_add_to_index(addr, size, item->file, item->line);
+        }        
+    }
     return addr;
 }
 
