@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #ifndef _MALLOC_OVERRIDE
+    #define _MALLOC_OVERRIDE
     #define malloc(size) memleak_alloc(size, __FILE__, __LINE__)
     #define calloc(nmemb, size) memleak_calloc(nmemb, size, __FILE__, __LINE__)
     #define realloc(ptr, size) memleak_realloc(ptr, size);
