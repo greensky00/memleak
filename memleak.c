@@ -142,7 +142,7 @@ void memleak_free(void *addr)
             item->addr, item->file, item->line, item->size);
 
         rb_erase(r, &rbtree);
-				free(item);
+        free(item);
     }
 }
 
