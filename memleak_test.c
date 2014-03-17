@@ -9,6 +9,22 @@
 
 #include "memleak.h"
 
+void *func_b()
+{
+    void *ptr_a;
+    void *ptr_b;
+    ptr_a = (void *)malloc(256);
+    ptr_b = (void *)malloc(128);
+    return ptr_a;
+}
+
+void func_a()
+{
+    void *ptr;
+    ptr = (void *)malloc(64);
+    free(func_b());
+}
+
 void basic_test()
 {
     uint8_t *a;
@@ -29,6 +45,8 @@ void basic_test()
 
     ret = posix_memalign(&str, 512, 512);
 
+    func_a();
+    
     free(a);
     free(b);
 

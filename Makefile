@@ -1,12 +1,15 @@
-MEMLEAK = memleak.o rbwrap.o rbtree.o
+MEMLEAK = memleak.o avltree.o
 MEMLEAK_TEST = memleak_test.o
 
 PROGRAMS = \
 	memleak_test \
 
-LDFLAGS =
+LDFLAGS = -lpthread \
+    -lbfd \
+
 CFLAGS = \
-	-g -D_GNU_SOURCE \
+	-g -D_GNU_SOURCE -rdynamic \
+    -D_LIBBFD \
 	
 all: $(PROGRAMS)
 
